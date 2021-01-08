@@ -1,2 +1,4 @@
 node_modules
 config/passportKeys.js
+config/mongoCredentials.js
+config/cookieKey.js

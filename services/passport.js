@@ -1,6 +1,18 @@
 const passport = require('passport');
 const GoogleStategy = require('passport-google-oauth20').Strategy;
+const mongoose = require('mongoose');
 const passportKeys = require('../config/passportKeys');
+
+const User = mongoose.model('users');
+
+// turn userinstance to id
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+// id and turn it back to userinstance
+passport.deserializeUser((id, done) => {
+    User.findById(id).then((user) => done(null, user));
+});
 
 passport.use(
     new GoogleStategy(
@@ -10,9 +22,16 @@ passport.use(
             callbackURL: '/auth/google/callback',
         },
         (accessToken, refreshToken, profile, done) => {
-            console.log('access token', accessToken);
-            console.log('refresh token', refreshToken);
             console.log('profile token', profile);
+            User.findOne({ googleId: profile.id }).then((existingUser) => {
+                if (existingUser) {
+                    done(null, existingUser); // no error, existingUser
+                } else {
+                    new User({ googleId: profile.id })
+                        .save()
+                        .then((user) => done(null, user));
+                }
+            });
         }
     )
 );
